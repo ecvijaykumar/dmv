@@ -11,6 +11,26 @@ const webDir = path.resolve(rootDir, "apps/web");
 const dataFile = path.resolve(__dirname, "../data/sessions.json");
 const PORT = Number(process.env.PORT || 4000);
 
+function getPublicFirebaseConfig() {
+  const config = {
+    apiKey: process.env.FIREBASE_WEB_API_KEY,
+    authDomain: process.env.FIREBASE_WEB_AUTH_DOMAIN,
+    projectId: process.env.FIREBASE_WEB_PROJECT_ID,
+    storageBucket: process.env.FIREBASE_WEB_STORAGE_BUCKET,
+    messagingSenderId: process.env.FIREBASE_WEB_MESSAGING_SENDER_ID,
+    appId: process.env.FIREBASE_WEB_APP_ID
+  };
+
+  const missing = Object.entries(config)
+    .filter(([, value]) => !value)
+    .map(([key]) => key);
+
+  return {
+    config,
+    missing
+  };
+}
+
 async function readSessions() {
   const raw = await fs.readFile(dataFile, "utf-8");
   const parsed = JSON.parse(raw);
@@ -80,6 +100,8 @@ function contentTypeFor(filePath) {
   if (filePath.endsWith(".html")) return "text/html; charset=utf-8";
   if (filePath.endsWith(".css")) return "text/css; charset=utf-8";
   if (filePath.endsWith(".js")) return "application/javascript; charset=utf-8";
+  if (filePath.endsWith(".svg")) return "image/svg+xml";
+  if (filePath.endsWith(".png")) return "image/png";
   return "text/plain; charset=utf-8";
 }
 
@@ -129,6 +151,19 @@ const server = createServer(async (req, res) => {
 
   if (req.method === "GET" && req.url === "/api/health") {
     sendJson(res, 200, { status: "ok" });
+    return;
+  }
+
+  if (req.method === "GET" && req.url === "/api/public-config") {
+    const { config, missing } = getPublicFirebaseConfig();
+    if (missing.length > 0) {
+      sendJson(res, 500, {
+        error: "Missing Firebase web config env vars",
+        missing
+      });
+      return;
+    }
+    sendJson(res, 200, { firebase: config });
     return;
   }
 
@@ -227,9 +262,12 @@ const server = createServer(async (req, res) => {
     req.method === "GET" &&
     (req.url === "/" ||
       req.url.startsWith("/index") ||
+      req.url.startsWith("/assets/") ||
       req.url.endsWith(".css") ||
       req.url.endsWith(".js") ||
-      req.url.endsWith(".json"))
+      req.url.endsWith(".json") ||
+      req.url.endsWith(".svg") ||
+      req.url.endsWith(".png"))
   ) {
     await serveWebAsset(req, res);
     return;

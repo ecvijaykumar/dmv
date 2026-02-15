@@ -8,7 +8,6 @@ import {
   signInWithPopup,
   signOut
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { firebaseConfig } from "/firebase-config.js";
 
 const form = document.getElementById("sessionForm");
 const list = document.getElementById("sessionList");
@@ -24,13 +23,27 @@ const profileInput = document.getElementById("profileId");
 
 let currentUser = null;
 let confirmation = null;
+let auth = null;
+let recaptchaVerifier = null;
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+function setAuthButtonsEnabled(enabled) {
+  googleBtn.disabled = !enabled;
+  sendOtpBtn.disabled = !enabled;
+  verifyOtpBtn.disabled = !enabled;
+}
 
-const recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
-  size: "normal"
-});
+async function fetchFirebaseWebConfig() {
+  const res = await fetch("/api/public-config");
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error || "Failed to load public config");
+  }
+  const json = await res.json();
+  if (!json.firebase) {
+    throw new Error("Missing firebase config payload");
+  }
+  return json.firebase;
+}
 
 async function authHeaders() {
   if (!currentUser) throw new Error("Sign in required");
@@ -147,62 +160,76 @@ async function refresh() {
   renderStats(summary);
 }
 
-googleBtn.addEventListener("click", async () => {
-  try {
-    await signInWithPopup(auth, new GoogleAuthProvider());
-  } catch (error) {
-    alert(error.message || "Google sign-in failed");
-  }
-});
+async function initAuth() {
+  setAuthButtonsEnabled(false);
+  authStatus.textContent = "Loading secure auth config...";
 
-sendOtpBtn.addEventListener("click", async () => {
-  const phone = phoneInput.value.trim();
-  if (!phone) {
-    alert("Enter phone number in E.164 format, e.g. +14085551234");
-    return;
-  }
-  try {
-    confirmation = await signInWithPhoneNumber(auth, phone, recaptchaVerifier);
-    alert("OTP sent. Enter the code.");
-  } catch (error) {
-    alert(error.message || "Failed to send OTP");
-  }
-});
+  const firebaseConfig = await fetchFirebaseWebConfig();
+  const app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
+    size: "normal"
+  });
 
-verifyOtpBtn.addEventListener("click", async () => {
-  if (!confirmation) {
-    alert("Request OTP first.");
-    return;
-  }
-  try {
-    await confirmation.confirm(otpInput.value.trim());
-  } catch (error) {
-    alert(error.message || "Invalid OTP");
-  }
-});
+  setAuthButtonsEnabled(true);
 
-signOutBtn.addEventListener("click", async () => {
-  await signOut(auth);
-});
+  googleBtn.addEventListener("click", async () => {
+    try {
+      await signInWithPopup(auth, new GoogleAuthProvider());
+    } catch (error) {
+      alert(error.message || "Google sign-in failed");
+    }
+  });
 
-onAuthStateChanged(auth, async (user) => {
-  currentUser = user;
+  sendOtpBtn.addEventListener("click", async () => {
+    const phone = phoneInput.value.trim();
+    if (!phone) {
+      alert("Enter phone number in E.164 format, e.g. +14085551234");
+      return;
+    }
+    try {
+      confirmation = await signInWithPhoneNumber(auth, phone, recaptchaVerifier);
+      alert("OTP sent. Enter the code.");
+    } catch (error) {
+      alert(error.message || "Failed to send OTP");
+    }
+  });
 
-  if (!user) {
-    authStatus.textContent = "Not signed in";
-    authStatus.className = "mb-4 rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm text-slate-300";
-    form.classList.add("hidden");
-    signOutBtn.classList.add("hidden");
+  verifyOtpBtn.addEventListener("click", async () => {
+    if (!confirmation) {
+      alert("Request OTP first.");
+      return;
+    }
+    try {
+      await confirmation.confirm(otpInput.value.trim());
+    } catch (error) {
+      alert(error.message || "Invalid OTP");
+    }
+  });
+
+  signOutBtn.addEventListener("click", async () => {
+    await signOut(auth);
+  });
+
+  onAuthStateChanged(auth, async (user) => {
+    currentUser = user;
+
+    if (!user) {
+      authStatus.textContent = "Not signed in";
+      authStatus.className = "mb-4 rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm text-slate-300";
+      form.classList.add("hidden");
+      signOutBtn.classList.add("hidden");
+      await refresh();
+      return;
+    }
+
+    authStatus.textContent = `Signed in as ${user.email || user.phoneNumber || user.uid}`;
+    authStatus.className = "mb-4 rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-100";
+    form.classList.remove("hidden");
+    signOutBtn.classList.remove("hidden");
     await refresh();
-    return;
-  }
-
-  authStatus.textContent = `Signed in as ${user.email || user.phoneNumber || user.uid}`;
-  authStatus.className = "mb-4 rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-100";
-  form.classList.remove("hidden");
-  signOutBtn.classList.remove("hidden");
-  await refresh();
-});
+  });
+}
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -235,4 +262,15 @@ form.addEventListener("submit", async (event) => {
 });
 
 profileInput.addEventListener("change", refresh);
-refresh();
+
+initAuth().catch((error) => {
+  setAuthButtonsEnabled(false);
+  authStatus.textContent = "Auth setup error";
+  authStatus.className = "mb-4 rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-100";
+  stats.innerHTML = '<p class="text-sm text-rose-200">Failed to load Firebase config from server env.</p>';
+  list.innerHTML = `
+    <li class="rounded-xl border border-rose-400/30 bg-rose-500/10 p-6 text-center text-sm text-rose-100">
+      ${error.message}
+    </li>
+  `;
+});
