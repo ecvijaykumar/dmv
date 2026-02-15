@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DMV Practice Logger</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>DMV Practice Logger</h1>
+      <p class="subtitle">Track supervised driving practice hours for DMV records.</p>
+
+      <section class="card">
+        <h2>Secure Login</h2>
+        <p id="authStatus">Checking session...</p>
+        <div class="auth-grid">
+          <button id="googleLoginBtn" type="button">Login with Gmail</button>
+          <input id="phoneNumber" placeholder="+14085551234" />
+          <button id="sendOtpBtn" type="button">Send OTP</button>
+          <input id="otpCode" placeholder="OTP code" />
+          <button id="verifyOtpBtn" type="button">Verify OTP</button>
+          <button id="signOutBtn" class="hidden" type="button">Sign out</button>
+        </div>
+        <div id="recaptcha-container"></div>
+      </section>
+
+      <section class="card">
+        <h2>Profile</h2>
+        <label>Driver profile ID (e.g. teen-1, teen-2) <input id="profileId" value="teen-1" required /></label>
+      </section>
+
+      <section class="card">
+        <h2>Add Session</h2>
+        <form id="sessionForm" class="grid hidden">
+          <label>Date <input name="date" type="date" required /></label>
+          <label>Start time <input name="startTime" type="time" required /></label>
+          <label>Duration (minutes) <input name="durationMinutes" type="number" min="1" required /></label>
+          <label>Day/Night
+            <select name="timeOfDay" required>
+              <option value="day">Day</option>
+              <option value="night">Night</option>
+            </select>
+          </label>
+          <label>Weather
+            <select name="weather" required>
+              <option value="clear">Clear</option>
+              <option value="rain">Rain</option>
+              <option value="fog">Fog</option>
+              <option value="snow">Snow</option>
+              <option value="wind">Wind</option>
+            </select>
+          </label>
+          <label class="full">Notes <textarea name="notes" rows="3"></textarea></label>
+          <button type="submit">Save Session</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Summary</h2>
+        <div id="stats">Loading...</div>
+      </section>
+
+      <section class="card">
+        <h2>Sessions</h2>
+        <ul id="sessionList"></ul>
+      </section>
+    </main>
+
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>

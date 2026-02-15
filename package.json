@@ -1,0 +1,15 @@
+{
+  "name": "dmv-practice-logger",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "node --watch apps/api/src/server.js",
+    "start:api": "node apps/api/src/server.js",
+    "dev:web": "echo 'Web app is served by API at http://localhost:4000'",
+    "dev:mobile": "npm --workspace apps/mobile run start"
+  }
+}

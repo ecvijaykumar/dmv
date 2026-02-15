@@ -1,0 +1,24 @@
+[
+  {
+    "id": "s_1771183926702_1241",
+    "studentId": "100",
+    "date": "2026-02-14",
+    "startTime": "15:31",
+    "durationMinutes": 60,
+    "timeOfDay": "day",
+    "weather": "clear",
+    "notes": "Clear weather first day practice",
+    "createdAt": "2026-02-15T19:32:06.702Z"
+  },
+  {
+    "id": "s_1771184219930_6646",
+    "studentId": "100",
+    "date": "2026-02-13",
+    "startTime": "17:30",
+    "durationMinutes": 40,
+    "timeOfDay": "day",
+    "weather": "clear",
+    "notes": "",
+    "createdAt": "2026-02-15T19:36:59.930Z"
+  }
+]
