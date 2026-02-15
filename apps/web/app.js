@@ -63,7 +63,11 @@ async function fetchStats() {
 function renderList(sessions) {
   list.innerHTML = "";
   if (!sessions.length) {
-    list.innerHTML = "<li>No sessions yet.</li>";
+    list.innerHTML = `
+      <li class="rounded-xl border border-dashed border-slate-700 bg-slate-900/60 p-6 text-center text-sm text-slate-400">
+        No sessions yet for this profile.
+      </li>
+    `;
     return;
   }
 
@@ -71,17 +75,28 @@ function renderList(sessions) {
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     .forEach((session) => {
       const li = document.createElement("li");
+      li.className = "rounded-xl border border-slate-700 bg-slate-900/60 p-4";
       li.innerHTML = `
-        <div>
-          <strong>${session.date}</strong> ${session.startTime} • ${session.durationMinutes} min • ${session.timeOfDay} • ${session.weather}
-          <div>Profile: ${session.profileId}</div>
-          <div>${session.notes || "No notes"}</div>
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div class="space-y-1">
+            <p class="text-sm font-semibold text-slate-100">
+              ${session.date} at ${session.startTime}
+            </p>
+            <p class="text-sm text-slate-300">
+              ${session.durationMinutes} min • <span class="capitalize">${session.timeOfDay}</span> • <span class="capitalize">${session.weather}</span>
+            </p>
+            <p class="text-xs text-cyan-200">Profile: ${session.profileId}</p>
+            <p class="text-sm text-slate-400">${session.notes || "No notes"}</p>
+          </div>
         </div>
       `;
 
+      const actions = document.createElement("div");
+      actions.className = "mt-3 flex justify-end";
+
       const delButton = document.createElement("button");
       delButton.textContent = "Delete";
-      delButton.className = "delete";
+      delButton.className = "rounded-lg border border-rose-400/40 bg-rose-500/10 px-3 py-1.5 text-sm font-medium text-rose-100 transition hover:bg-rose-500/20";
       delButton.onclick = async () => {
         const headers = await authHeaders();
         await fetch(`/api/sessions/${session.id}`, {
@@ -91,24 +106,40 @@ function renderList(sessions) {
         await refresh();
       };
 
-      li.appendChild(delButton);
+      actions.appendChild(delButton);
+      li.appendChild(actions);
       list.appendChild(li);
     });
 }
 
+function statCard(label, value) {
+  return `
+    <div class="rounded-xl border border-slate-700 bg-slate-900/60 p-3">
+      <p class="text-xs uppercase tracking-wide text-slate-400">${label}</p>
+      <p class="mt-1 text-xl font-bold text-cyan-100">${value}</p>
+    </div>
+  `;
+}
+
 function renderStats(summary) {
   stats.innerHTML = `
-    <p>Total sessions: <strong>${summary.sessionCount}</strong></p>
-    <p>Total hours: <strong>${summary.totalHours}</strong></p>
-    <p>Day hours: <strong>${summary.dayHours}</strong></p>
-    <p>Night hours: <strong>${summary.nightHours}</strong></p>
+    <div class="grid gap-3 sm:grid-cols-2">
+      ${statCard("Total Sessions", summary.sessionCount)}
+      ${statCard("Total Hours", summary.totalHours)}
+      ${statCard("Day Hours", summary.dayHours)}
+      ${statCard("Night Hours", summary.nightHours)}
+    </div>
   `;
 }
 
 async function refresh() {
   if (!currentUser) {
-    list.innerHTML = "<li>Sign in to view sessions.</li>";
-    stats.innerHTML = "Sign in to view summary.";
+    list.innerHTML = `
+      <li class="rounded-xl border border-dashed border-slate-700 bg-slate-900/60 p-6 text-center text-sm text-slate-400">
+        Sign in to view sessions.
+      </li>
+    `;
+    stats.innerHTML = '<p class="text-sm text-slate-400">Sign in to view summary.</p>';
     return;
   }
   const [sessions, summary] = await Promise.all([fetchSessions(), fetchStats()]);
@@ -159,6 +190,7 @@ onAuthStateChanged(auth, async (user) => {
 
   if (!user) {
     authStatus.textContent = "Not signed in";
+    authStatus.className = "mb-4 rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm text-slate-300";
     form.classList.add("hidden");
     signOutBtn.classList.add("hidden");
     await refresh();
@@ -166,6 +198,7 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   authStatus.textContent = `Signed in as ${user.email || user.phoneNumber || user.uid}`;
+  authStatus.className = "mb-4 rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-100";
   form.classList.remove("hidden");
   signOutBtn.classList.remove("hidden");
   await refresh();

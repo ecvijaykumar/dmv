@@ -240,5 +240,5 @@ const server = createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   // eslint-disable-next-line no-console
-  console.log(`DMV logger API listening on http://localhost:${PORT}`);
+  console.log(`T-Drive API listening on http://localhost:${PORT}`);
 });

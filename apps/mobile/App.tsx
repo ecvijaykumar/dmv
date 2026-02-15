@@ -171,7 +171,7 @@ export default function App() {
     <SafeAreaView style={styles.container}>
       <FirebaseRecaptchaVerifierModal ref={recaptchaVerifier} firebaseConfig={firebaseConfig} />
 
-      <Text style={styles.title}>DMV Practice Logger</Text>
+      <Text style={styles.title}>T-Drive App</Text>
       <Text style={styles.subtitle}>Secure multi-user login (Google or phone OTP)</Text>
 
       <View style={styles.authCard}>

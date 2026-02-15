@@ -1,4 +1,4 @@
-# DMV Practice Logger (Web + Mobile)
+# T-Drive App (Web + Mobile)
 
 A secure starter app for tracking supervised driving practice hours for DMV records.
 
@@ -48,6 +48,32 @@ For mobile:
 cd /Users/vijayekkaladevi/dev/dmv-practice-logger
 npm run dev:mobile
 ```
+
+## Mobile troubleshooting (macOS)
+
+If you see `xcrun simctl ... code: 72`, `TypeScript dependencies` prompt, or `EMFILE: too many open files`:
+
+1. Install Xcode Command Line Tools (one-time):
+```bash
+xcode-select --install
+```
+
+2. Install workspace dependencies (one-time):
+```bash
+cd /Users/vijayekkaladevi/dev/dmv-practice-logger
+npm install
+```
+
+3. Start mobile app with watcher headroom:
+```bash
+cd /Users/vijayekkaladevi/dev/dmv-practice-logger
+npm run dev:mobile
+```
+
+Notes:
+- `apps/mobile/package.json` now includes `typescript` and `@types/react` to avoid the prompt.
+- Mobile start scripts now set `ulimit -n 4096` and clear Metro cache.
+- If iOS simulator tooling is still unavailable, start Android/Web first.
 
 ## API routes (secured)
 

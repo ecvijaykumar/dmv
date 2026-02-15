@@ -4,7 +4,9 @@
   "private": true,
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
-    "start": "expo start"
+    "start": "ulimit -n 4096; expo start --clear",
+    "start:android": "ulimit -n 4096; expo start --android --clear",
+    "start:ios": "ulimit -n 4096; expo start --ios --clear"
   },
   "dependencies": {
     "expo": "~51.0.28",
@@ -14,5 +16,9 @@
     "firebase": "^10.12.5",
     "react": "18.2.0",
     "react-native": "0.74.5"
+  },
+  "devDependencies": {
+    "@types/react": "~18.2.79",
+    "typescript": "~5.3.3"
   }
 }
